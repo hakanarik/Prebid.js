@@ -44,6 +44,10 @@ export const spec = {
         sizes: transformSizes(validBidRequest.sizes)
       }
 
+      if(validBidRequest.params.bidfloor){
+        request.bidfloor = validBidRequest.params.bidfloor;
+      }
+
       payload.request.push(request);
     }
 
