@@ -35,6 +35,7 @@ export const spec = {
       payload.pid = validBidRequest.params.pid;
       payload.wid = validBidRequest.params.wid;
       payload.url = validBidRequest.params.url;
+      payload.nocount = validBidRequest.params.nocount;
 
       var request = {
         adUnitCode: validBidRequest.adUnitCode,

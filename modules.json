@@ -1,5 +1,8 @@
 [
+  "currency",
   "adformBidAdapter",
   "admaticBidAdapter",
-  "criteoBidAdapter"
+  "criteoBidAdapter",
+  "rtbhouseBidAdapter",
+  "improvedigitalBidAdapter"
 ]
