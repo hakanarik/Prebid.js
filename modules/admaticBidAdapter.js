@@ -36,6 +36,10 @@ export const spec = {
       payload.wid = validBidRequest.params.wid;
       payload.url = validBidRequest.params.url;
       payload.nocount = validBidRequest.params.nocount;
+      payload.screen = {
+        width : screen.width,
+        height : screen.height
+      };
 
       var request = {
         adUnitCode: validBidRequest.adUnitCode,
