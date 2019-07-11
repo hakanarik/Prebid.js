@@ -35,6 +35,11 @@ export const spec = {
       payload.pid = validBidRequest.params.pid;
       payload.wid = validBidRequest.params.wid;
       payload.url = validBidRequest.params.url;
+      payload.nocount = validBidRequest.params.nocount;
+      payload.screen = {
+        width : screen.width,
+        height : screen.height
+      };
 
       var request = {
         adUnitCode: validBidRequest.adUnitCode,
@@ -42,6 +47,10 @@ export const spec = {
         transactionId: validBidRequest.transactionId,
         priceType: validBidRequest.params.priceType,
         sizes: transformSizes(validBidRequest.sizes)
+      }
+
+      if(validBidRequest.params.bidfloor){
+        request.bidfloor = validBidRequest.params.bidfloor;
       }
 
       payload.request.push(request);
