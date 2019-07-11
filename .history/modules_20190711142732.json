@@ -1,0 +1,13 @@
+[
+<<<<<<< HEAD
+  "consentManagement",
+  "prebidServerBidAdapter"
+=======
+  "currency",
+  "adformBidAdapter",
+  "admaticBidAdapter",
+  "criteoBidAdapter",
+  "rtbhouseBidAdapter",
+  "improvedigitalBidAdapter"
+>>>>>>> origin
+]
