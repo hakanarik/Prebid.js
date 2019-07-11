@@ -6,7 +6,7 @@ const ENDPOINT_URL = '//ads4.admatic.com.tr/prebid/v3/bidrequest';
 
 export const spec = {
   code: BIDDER_CODE,
-  aliases: ['admatic'], // short code
+  // aliases: ['admatic'], // short code
   /**
   * Determines whether or not the given bid request is valid.
   *
