@@ -435,10 +435,6 @@ function outstreamRender(bid) {
   });
 }
 
-function handleOutstreamRendererEvents(bid, id, eventName) {
-  bid.renderer.handleVideoEvent({ id, eventName });
-}
-
 function parseMediaType(rtbBid) {
   const adType = rtbBid.ad_type;
   if (adType === VIDEO) {

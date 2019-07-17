@@ -24,11 +24,8 @@ describe('AdMatic adapter', () => {
   });
 
   describe('buildRequests', () => {
-
     it('should pass multiple bids via single request', () => {
       let request = spec.buildRequests(bids);
     });
-
-    
   });
 });

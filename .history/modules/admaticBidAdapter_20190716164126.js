@@ -421,24 +421,6 @@ function buildNativeRequest(params) {
   return request;
 }
 
-function outstreamRender(bid) {
-  // push to render queue because ANOutstreamVideo may not be loaded yet
-  bid.renderer.push(() => {
-    window.ANOutstreamVideo.renderAd({
-      tagId: bid.adResponse.tag_id,
-      sizes: [bid.getSize().split('x')],
-      targetId: bid.adUnitCode, // target div id to render video
-      uuid: bid.adResponse.uuid,
-      adResponse: bid.adResponse,
-      rendererOptions: bid.renderer.getConfig()
-    }, handleOutstreamRendererEvents.bind(null, bid));
-  });
-}
-
-function handleOutstreamRendererEvents(bid, id, eventName) {
-  bid.renderer.handleVideoEvent({ id, eventName });
-}
-
 function parseMediaType(rtbBid) {
   const adType = rtbBid.ad_type;
   if (adType === VIDEO) {

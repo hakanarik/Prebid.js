@@ -1,6 +1,6 @@
 import * as utils from '../src/utils';
-import { registerBidder, getIabSubCategory } from '../src/adapters/bidderFactory';
-import { BANNER, NATIVE, VIDEO, ADPOD } from '../src/mediaTypes';
+import { registerBidder } from '../src/adapters/bidderFactory';
+import { BANNER, NATIVE, VIDEO } from '../src/mediaTypes';
 import includes from 'core-js/library/fn/array/includes';
 
 const BIDDER_CODE = 'admatic';
@@ -161,13 +161,10 @@ export const spec = {
     if (serverBody) {
       if (serverBody.tags && serverBody.tags.length > 0) {
         serverBody.tags.forEach(serverBid => {
-          const rtbBid = getRtbBid(serverBid);
-          if (rtbBid) {
-            if (rtbBid.cpm !== 0 && includes(this.supportedMediaTypes, rtbBid.ad_type)) {
-              const bid = newBid(serverBid, rtbBid, bidderRequest);
-              bid.mediaType = parseMediaType(rtbBid);
-              bidResponses.push(bid);
-            }
+          if (serverBid.cpm !== 0 && includes(this.supportedMediaTypes, serverBid.ad_type)) {
+            const bid = newBid(serverBid, rtbBid, bidderRequest);
+            bid.mediaType = parseMediaType(rtbBid);
+            bidResponses.push(bid);
           }
           // if (serverBid != null) {
           //   if (serverBid.cpm !== 0) {
@@ -206,14 +203,14 @@ export const spec = {
     if (syncOptions.iframeEnabled) {
       syncs.push({
         type: 'iframe',
-        url: 'https://ads4.admatic.com.tr/prebid/static/usersync/v3/async_usersync.html'
+        url: '//ads4.admatic.com.tr/prebid/static/usersync/v3/async_usersync.html'
       });
     }
 
     if (syncOptions.pixelEnabled && serverResponses.length > 0) {
       syncs.push({
         type: 'image',
-        url: 'https://ads4.admatic.com.tr/prebid/v3/bidrequest/usersync'
+        url: 'https://ads5.admatic.com.tr/prebid/v3/bidrequest/usersync'
       });
     }
     return syncs;
@@ -241,213 +238,6 @@ function transformSizes(requestSizes) {
   }
 
   return sizes;
-}
-
-function getRtbBid(tag) {
-  return tag && tag.ads && tag.ads.length && find(tag.ads, ad => ad.rtb);
-}
-
-/**
- * Unpack the Server's Bid into a Prebid-compatible one.
- * @param serverBid
- * @param rtbBid
- * @param bidderRequest
- * @return Bid
- */
-function newBid(serverBid, rtbBid, bidderRequest) {
-  const bidRequest = utils.getBidRequest(serverBid.uuid, [bidderRequest]);
-  const bid = {
-    requestId: serverBid.uuid,
-    cpm: rtbBid.cpm,
-    creativeId: rtbBid.creative_id,
-    dealId: rtbBid.deal_id,
-    currency: rtbBid.currency,
-    netRevenue: true,
-    ttl: 300,
-    adUnitCode: bidRequest.adUnitCode
-  };
-
-  if (rtbBid.rtb.video) {
-    Object.assign(bid, {
-      width: rtbBid.rtb.video.player_width,
-      height: rtbBid.rtb.video.player_height,
-      vastUrl: rtbBid.rtb.video.asset_url,
-      vastImpUrl: rtbBid.notify_url,
-      ttl: 3600
-    });
-
-    const videoContext = utils.deepAccess(bidRequest, 'mediaTypes.video.context');
-    if (videoContext === ADPOD) {
-      const iabSubCatId = getIabSubCategory(bidRequest.bidder, rtbBid.brand_category_id);
-      bid.meta = {
-        iabSubCatId
-      };
-
-      bid.video = {
-        context: ADPOD,
-        durationSeconds: Math.floor(rtbBid.rtb.video.duration_ms / 1000),
-      };
-    }
-
-    // This supports Outstream Video
-    if (rtbBid.renderer_url) {
-      const rendererOptions = utils.deepAccess(
-        bidderRequest.bids[0],
-        'renderer.options'
-      );
-
-      Object.assign(bid, {
-        adResponse: serverBid,
-        renderer: newRenderer(bid.adUnitCode, rtbBid, rendererOptions)
-      });
-      bid.adResponse.ad = bid.adResponse.ads[0];
-      bid.adResponse.ad.video = bid.adResponse.ad.rtb.video;
-    }
-  } else if (rtbBid.rtb[NATIVE]) {
-    const nativeAd = rtbBid.rtb[NATIVE];
-    bid[NATIVE] = {
-      title: nativeAd.title,
-      body: nativeAd.desc,
-      body2: nativeAd.desc2,
-      cta: nativeAd.ctatext,
-      rating: nativeAd.rating,
-      sponsoredBy: nativeAd.sponsored,
-      privacyLink: nativeAd.privacy_link,
-      address: nativeAd.address,
-      downloads: nativeAd.downloads,
-      likes: nativeAd.likes,
-      phone: nativeAd.phone,
-      price: nativeAd.price,
-      salePrice: nativeAd.saleprice,
-      clickUrl: nativeAd.link.url,
-      displayUrl: nativeAd.displayurl,
-      clickTrackers: nativeAd.link.click_trackers,
-      impressionTrackers: nativeAd.impression_trackers,
-      javascriptTrackers: nativeAd.javascript_trackers
-    };
-    if (nativeAd.main_img) {
-      bid['native'].image = {
-        url: nativeAd.main_img.url,
-        height: nativeAd.main_img.height,
-        width: nativeAd.main_img.width,
-      };
-    }
-    if (nativeAd.icon) {
-      bid['native'].icon = {
-        url: nativeAd.icon.url,
-        height: nativeAd.icon.height,
-        width: nativeAd.icon.width,
-      };
-    }
-  } else {
-    Object.assign(bid, {
-      width: rtbBid.rtb.banner.width,
-      height: rtbBid.rtb.banner.height,
-      ad: rtbBid.rtb.banner.content
-    });
-    try {
-      const url = rtbBid.rtb.trackers[0].impression_urls[0];
-      const tracker = utils.createTrackPixelHtml(url);
-      bid.ad += tracker;
-    } catch (error) {
-      utils.logError('Error appending tracking pixel', error);
-    }
-  }
-
-  return bid;
-}
-
-function newRenderer(adUnitCode, rtbBid, rendererOptions = {}) {
-  const renderer = Renderer.install({
-    id: rtbBid.renderer_id,
-    url: rtbBid.renderer_url,
-    config: rendererOptions,
-    loaded: false,
-    adUnitCode
-  });
-
-  try {
-    renderer.setRender(outstreamRender);
-  } catch (err) {
-    utils.logWarn('Prebid Error calling setRender on renderer', err);
-  }
-
-  renderer.setEventHandlers({
-    impression: () => utils.logMessage('AdMatic outstream video impression event'),
-    loaded: () => utils.logMessage('AdMatic outstream video loaded event'),
-    ended: () => {
-      utils.logMessage('AdMatic outstream renderer video event');
-      document.querySelector(`#${adUnitCode}`).style.display = 'none';
-    }
-  });
-  return renderer;
-}
-
-function buildNativeRequest(params) {
-  const request = {};
-
-  // map standard prebid native asset identifier to /ut parameters
-  // e.g., tag specifies `body` but /ut only knows `description`.
-  // mapping may be in form {tag: '<server name>'} or
-  // {tag: {serverName: '<server name>', requiredParams: {...}}}
-  Object.keys(params).forEach(key => {
-    // check if one of the <server name> forms is used, otherwise
-    // a mapping wasn't specified so pass the key straight through
-    const requestKey =
-      (NATIVE_MAPPING[key] && NATIVE_MAPPING[key].serverName) ||
-      NATIVE_MAPPING[key] ||
-      key;
-
-    // required params are always passed on request
-    const requiredParams = NATIVE_MAPPING[key] && NATIVE_MAPPING[key].requiredParams;
-    request[requestKey] = Object.assign({}, requiredParams, params[key]);
-
-    // minimum params are passed if no non-required params given on adunit
-    const minimumParams = NATIVE_MAPPING[key] && NATIVE_MAPPING[key].minimumParams;
-
-    if (requiredParams && minimumParams) {
-      // subtract required keys from adunit keys
-      const adunitKeys = Object.keys(params[key]);
-      const requiredKeys = Object.keys(requiredParams);
-      const remaining = adunitKeys.filter(key => !includes(requiredKeys, key));
-
-      // if none are left over, the minimum params needs to be sent
-      if (remaining.length === 0) {
-        request[requestKey] = Object.assign({}, request[requestKey], minimumParams);
-      }
-    }
-  });
-
-  return request;
-}
-
-function outstreamRender(bid) {
-  // push to render queue because ANOutstreamVideo may not be loaded yet
-  bid.renderer.push(() => {
-    window.ANOutstreamVideo.renderAd({
-      tagId: bid.adResponse.tag_id,
-      sizes: [bid.getSize().split('x')],
-      targetId: bid.adUnitCode, // target div id to render video
-      uuid: bid.adResponse.uuid,
-      adResponse: bid.adResponse,
-      rendererOptions: bid.renderer.getConfig()
-    }, handleOutstreamRendererEvents.bind(null, bid));
-  });
-}
-
-function handleOutstreamRendererEvents(bid, id, eventName) {
-  bid.renderer.handleVideoEvent({ id, eventName });
-}
-
-function parseMediaType(rtbBid) {
-  const adType = rtbBid.ad_type;
-  if (adType === VIDEO) {
-    return VIDEO;
-  } else if (adType === NATIVE) {
-    return NATIVE;
-  } else {
-    return BANNER;
-  }
 }
 
 registerBidder(spec);
